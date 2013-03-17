@@ -9,7 +9,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import ru.kt15.finomen.PacketConnection;
 import ru.kt15.finomen.PacketListener;
 import ru.kt15.finomen.StreamConnection;
-import ru.kt15.finomen.WritablePacketConnection;
 import ru.kt15.net.labs.sessions.ServerControl.CS;
 import ru.kt15.net.labs.sessions.TCPServerPacketTypes;
 import ru.kt15.net.labs.sessions.TcpClientPacketTypes;

@@ -85,7 +85,5 @@ public class ClientStore implements DiscoverListener {
 
 	@Override
 	public void discoverRecvd(String host, int port) {
-		// TODO Auto-generated method stub
-		
 	}
 }
