@@ -16,7 +16,7 @@ public class ClientStore implements DiscoverListener {
 	public Collection<Client> getClients() {
 		return clients.values();
 	}
-	
+
 	public void update(Host host) {
 		String address = host.getKey().getAddress();
 		Client client = null;
@@ -27,41 +27,41 @@ public class ClientStore implements DiscoverListener {
 			client = new Client(address);
 			add = true;
 		}
-		
+
 		if (host.hasName() && !host.getName().equals(client.computerName)) {
 			client.computerName = host.getName();
 			if (!add) {
 				changeName(client);
 			}
 		}
-		
+
 		if (host.hasValid() && host.getValid() != client.valid) {
 			client.valid = host.getValid();
 			if (!add) {
 				changeValid(client);
 			}
 		}
-		
-		//TODO: remove
-		
+
+		// TODO: remove
+
 		if (add) {
 			clients.put(address, client);
 			addClient(client);
 		}
 	}
-	
+
 	private void addClient(Client client) {
 		for (ClientUpdateListener listener : listeners) {
 			listener.addClient(client.host, client.computerName, client.valid);
 		}
 	}
-	
-	private void changeName(Client client) {	
+
+	private void changeName(Client client) {
 		for (ClientUpdateListener listener : listeners) {
 			listener.changeName(client.host, client.computerName);
 		}
 	}
-	
+
 	private void changeValid(Client client) {
 		for (ClientUpdateListener listener : listeners) {
 			listener.changeValid(client.host, client.valid);

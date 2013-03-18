@@ -16,18 +16,18 @@ import ru.kt15.net.labs.sessions.TcpClientPacketTypes;
 public class ClientPacketListener implements PacketListener {
 	private final ReplicationPacketListener replicationListener;
 	private final AdminHandler adminListener;
-	
-	public ClientPacketListener(ReplicationPacketListener replicationListener, AdminHandler adminListener) {
+
+	public ClientPacketListener(ReplicationPacketListener replicationListener,
+			AdminHandler adminListener) {
 		this.replicationListener = replicationListener;
 		this.adminListener = adminListener;
 	}
-	
+
 	@Override
 	public void handlePacket(PacketConnection conn, InetSocketAddress source,
 			InetSocketAddress dest, byte[] packet) {
-		switch(TcpClientPacketTypes.valueOf(packet[0])) {
-		case SERVER_ID:
-		{
+		switch (TcpClientPacketTypes.valueOf(packet[0])) {
+		case SERVER_ID: {
 			String id = new String(Arrays.copyOfRange(packet, 3, 3 + packet[1]));
 			replicationListener.registerServer(source, id);
 			String myId = Options.serverUUID.toString();
@@ -38,22 +38,23 @@ public class ClientPacketListener implements PacketListener {
 			buf.flip();
 			byte[] pack = new byte[buf.remaining()];
 			buf.get(pack);
-			((StreamConnection)conn).Send(pack);
+			((StreamConnection) conn).Send(pack);
 			conn.removeAllListeners();
 			conn.addRecvListener(replicationListener);
 			break;
 		}
 		case SESSION_CHECK:
-			//TODO:
+			// TODO:
 			break;
 		case SESSION_REQUEST:
-			//TODO:
+			// TODO:
 			break;
 		case ADMIN_CS:
 			try {
 				adminListener.setAdminConnection((StreamConnection) conn);
-				CS cs = CS.parseFrom(Arrays.copyOfRange(packet, 3, packet.length));
-				
+				CS cs = CS.parseFrom(Arrays.copyOfRange(packet, 3,
+						packet.length));
+
 				if (cs.hasLogTcp())
 					adminListener.setTcpLogging(cs.getLogTcp());
 				if (cs.hasLogUdp())
@@ -68,7 +69,7 @@ public class ClientPacketListener implements PacketListener {
 			break;
 		default:
 			break;
-		
+
 		}
 	}
 

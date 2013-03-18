@@ -20,24 +20,24 @@ public class ReplicationPacketListener implements PacketListener {
 
 	public ReplicationPacketListener(ClientStore clientStore) {
 		this.clientStore = clientStore;
-		
+
 	}
-	
+
 	@Override
 	public void handlePacket(PacketConnection conn, InetSocketAddress source,
 			InetSocketAddress dest, byte[] packet) {
-		
+
 		switch (TcpReplicationTypes.valueOf(packet[0])) {
 		case LIST_REQUEST:
 			break;
-		case LIST_UPDATES:
-		{
+		case LIST_UPDATES: {
 			try {
-				List updates = List.parseFrom(Arrays.copyOfRange(packet, 1, packet.length));
+				List updates = List.parseFrom(Arrays.copyOfRange(packet, 1,
+						packet.length));
 				for (Session session : updates.getSessionsList()) {
-					//TODO:
+					// TODO:
 				}
-				
+
 				for (Host host : updates.getHostsList()) {
 					clientStore.update(host);
 				}
@@ -50,7 +50,7 @@ public class ReplicationPacketListener implements PacketListener {
 			break;
 		}
 	}
-	
+
 	public void registerServer(InetSocketAddress addr, String id) {
 		serverIds.put(addr, id);
 	}
