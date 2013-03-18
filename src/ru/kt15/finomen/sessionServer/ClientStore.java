@@ -1,6 +1,7 @@
 package ru.kt15.finomen.sessionServer;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,14 +13,8 @@ public class ClientStore implements DiscoverListener {
 	private final Set<ClientUpdateListener> listeners = new HashSet<>();
 	private final Map<String, Client> clients = new HashMap<>();
 
-	private static class Client {
-		final String host;
-		String computerName;
-		boolean valid;
-		
-		Client(String host) {
-			this.host = host;
-		}
+	public Collection<Client> getClients() {
+		return clients.values();
 	}
 	
 	public void update(Host host) {

@@ -49,7 +49,7 @@ public class Main {
 		ReplicationPacketListener replicationListener = new ReplicationPacketListener(clientStore);
 		System.out.println("OK");
 		System.out.println("Initializing administartion controller...");
-		AdminController adminController = new AdminController(ioService);
+		AdminController adminController = new AdminController(clientStore, ioService);
 		for (DatagramConnection dg : udpConnections) {
 			adminController.addUdpConnection(dg);
 		}

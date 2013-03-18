@@ -10,6 +10,7 @@ import ru.kt15.finomen.IOService;
 import ru.kt15.finomen.PacketConnection;
 import ru.kt15.finomen.PacketListener;
 import ru.kt15.finomen.StreamConnection;
+import ru.kt15.net.labs.sessions.ServerControl;
 import ru.kt15.net.labs.sessions.ServerControl.Packet;
 import ru.kt15.net.labs.sessions.ServerControl.SC;
 import ru.kt15.net.labs.sessions.TCPServerPacketTypes;
@@ -26,6 +27,7 @@ public class AdminController implements AdminHandler, Runnable {
 	private final Thread worker;
 	
 	private StreamConnection adminConnection;
+	private final ClientStore clientStore;
 	
 	private PacketListener udpHandler = new PacketListener() {
 		@Override
@@ -55,8 +57,8 @@ public class AdminController implements AdminHandler, Runnable {
 		}
 	};
 	
-	
-	public AdminController(IOService ioService) {
+	public AdminController(ClientStore clientStore, IOService ioService) {
+		this.clientStore = clientStore;
 		this.ioService = ioService;
 		worker = new Thread(this);
 		worker.start();
@@ -103,6 +105,12 @@ public class AdminController implements AdminHandler, Runnable {
 			synchronized (packetLock) {
 				currentPacketLog.setLastRoutineTime(ioService.getLastCycleTime());
 				currentPacketLog.setAverageRoutimeTime(ioService.getAverageCycleTime());
+				
+				for (Client client : clientStore.getClients()) {
+					ServerControl.Host host = ServerControl.Host.newBuilder().setAddress(client.host).setName(client.computerName).setValid(client.valid).build();
+					currentPacketLog.addHosts(host);
+				}
+				
 				SC sc = currentPacketLog.build();
 				currentPacketLog = SC.newBuilder();
 				
@@ -115,7 +123,9 @@ public class AdminController implements AdminHandler, Runnable {
 				buf.get(pack);
 				
 				if (adminConnection != null) {
-					adminConnection.Send(pack);
+					if (!adminConnection.Send(pack)) {
+						adminConnection = null;
+					}
 				}
 			}
 		}
