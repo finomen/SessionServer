@@ -47,14 +47,14 @@ public class Main {
 		discoverHandler.addListener(clientStore);
 		System.out.println("Done");
 		System.out.println("Initializing session storage...");
-		// TODO:
-		System.out.println("DISABLED");
+		SessionStore sessionStore = new SessionStore();
+		System.out.println("Done");
 		System.out.println("Initializing replication controller...");
 		ReplicationPacketListener replicationListener = new ReplicationPacketListener(
 				clientStore);
 		System.out.println("OK");
 		System.out.println("Initializing administartion controller...");
-		AdminController adminController = new AdminController(clientStore,
+		AdminController adminController = new AdminController(clientStore, sessionStore,
 				ioService);
 		for (DatagramConnection dg : udpConnections) {
 			adminController.addUdpConnection(dg);
@@ -62,7 +62,7 @@ public class Main {
 		System.out.println("OK");
 		System.out.println("Initializing client connection controller...");
 		ClientPacketListener clientListener = new ClientPacketListener(
-				replicationListener, adminController);
+				replicationListener, adminController, sessionStore, clientStore);
 		System.out.println("OK");
 		System.out.println("Start listening...");
 		ServerConnection serverConnection = new ServerConnection(

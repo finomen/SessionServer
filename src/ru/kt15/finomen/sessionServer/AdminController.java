@@ -27,6 +27,7 @@ public class AdminController implements AdminHandler, Runnable {
 
 	private StreamConnection adminConnection;
 	private final ClientStore clientStore;
+	private final SessionStore sessionStore; //TODO:
 
 	private PacketListener udpHandler = new PacketListener() {
 		@Override
@@ -61,9 +62,10 @@ public class AdminController implements AdminHandler, Runnable {
 			}
 		}
 	};
-
-	public AdminController(ClientStore clientStore, IOService ioService) {
+	
+	public AdminController(ClientStore clientStore, SessionStore sessionStore, IOService ioService) {
 		this.clientStore = clientStore;
+		this.sessionStore = sessionStore;
 		this.ioService = ioService;
 		worker = new Thread(this);
 		worker.start();

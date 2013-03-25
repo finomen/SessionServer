@@ -81,4 +81,11 @@ public class ClientStore implements DiscoverListener {
 	@Override
 	public void discoverRecvd(String host, int port) {
 	}
+	
+	public Client getClient(String host) {
+		if (!clients.containsKey(host)) {
+			clients.put(host,  new Client(host));
+		}
+		return clients.get(host);
+	}
 }
