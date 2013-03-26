@@ -165,6 +165,68 @@ public class ClientProtocolDefinition implements StreamProtocolDefinition,
 		}
 
 	}
+	
+	private static class LIST_REQUEST_Parser implements PacketParser {
+		short len = -1;
+		ByteBuffer buf = ByteBuffer.allocate(2);
+
+		@Override
+		public int remaining() {
+			return buf.remaining();
+		}
+
+		@Override
+		public void put(byte[] data) {
+			buf.put(data);
+			if (len == -1 && buf.remaining() == 0) {
+				buf.flip();
+				len = buf.getShort();
+				buf = ByteBuffer.allocate(3 + len);
+				buf.put((byte) TcpReplicationTypes.LIST_REQUEST.ordinal());
+				buf.putShort(len);
+			}
+		}
+
+		@Override
+		public byte[] build() {
+			buf.flip();
+			byte[] pack = new byte[buf.remaining()];
+			buf.get(pack);
+			return pack;
+		}
+
+	}
+	
+	private static class LIST_UPDATES_Parser implements PacketParser {
+		short len = -1;
+		ByteBuffer buf = ByteBuffer.allocate(2);
+
+		@Override
+		public int remaining() {
+			return buf.remaining();
+		}
+
+		@Override
+		public void put(byte[] data) {
+			buf.put(data);
+			if (len == -1 && buf.remaining() == 0) {
+				buf.flip();
+				len = buf.getShort();
+				buf = ByteBuffer.allocate(3 + len);
+				buf.put((byte) TcpReplicationTypes.LIST_REQUEST.ordinal());
+				buf.putShort(len);
+			}
+		}
+
+		@Override
+		public byte[] build() {
+			buf.flip();
+			byte[] pack = new byte[buf.remaining()];
+			buf.get(pack);
+			return pack;
+		}
+
+	}
 
 	private PacketParser parser = null;
 	private boolean replication = false;
@@ -180,10 +242,10 @@ public class ClientProtocolDefinition implements StreamProtocolDefinition,
 			TcpReplicationTypes packetId = TcpReplicationTypes.valueOf(data[0]);
 			switch (packetId) {
 			case LIST_REQUEST:
-				// TODO:
+				parser = new LIST_REQUEST_Parser();
 				break;
 			case LIST_UPDATES:
-				// TODO:
+				parser = new LIST_UPDATES_Parser();
 				break;
 			case UNKNOWN:
 				break;
