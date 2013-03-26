@@ -122,6 +122,16 @@ public class AdminController implements AdminHandler, Runnable {
 							.setValid(client.valid).build();
 					currentPacketLog.addHosts(host);
 				}
+				
+				for (Session session : sessionStore.getSessions()) {
+					ServerControl.Session s = ServerControl.Session.newBuilder()
+							.setSessionId(session.id.toString())
+							.setServerId(session.serverId)
+							.setSessionDest(session.dest.host)
+							.setSessionSource(session.source.host)
+							.setValidUntil(session.validUntil.getTime()).build();
+					currentPacketLog.addSessions(s);
+				}
 
 				SC sc = currentPacketLog.build();
 				currentPacketLog = SC.newBuilder();

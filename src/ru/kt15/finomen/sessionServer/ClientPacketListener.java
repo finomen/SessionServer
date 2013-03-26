@@ -11,6 +11,7 @@ import ru.kt15.finomen.PacketConnection;
 import ru.kt15.finomen.PacketListener;
 import ru.kt15.finomen.StreamConnection;
 import ru.kt15.net.labs.sessions.ServerControl.CS;
+import ru.kt15.net.labs.sessions.ServerControl.ValidateRequest;
 import ru.kt15.net.labs.sessions.TCPServerPacketTypes;
 import ru.kt15.net.labs.sessions.TcpClientPacketTypes;
 
@@ -117,6 +118,12 @@ public class ClientPacketListener implements PacketListener {
 					adminListener.setUdpLogging(cs.getLogUdp());
 				if (cs.hasLogAdmin())
 					adminListener.setAdminLogging(cs.getLogAdmin());
+				for (ValidateRequest req : cs.getUserValidateList()) {
+					Client c = clientStore.getClient(req.getHost());
+					if (c.computerName.equals(req.getName())) {
+						c.valid = req.getValid();
+					}
+				}
 			} catch (InvalidProtocolBufferException e) {
 				e.printStackTrace();
 			}

@@ -8,7 +8,7 @@ public class Session implements Comparable<Session> {
 	final String serverId;
 	final Client source;
 	final Client dest;
-	final Date validUntil;
+	Date validUntil;
 
 	Session(Client source, Client dest) {
 		this.id = UUID.randomUUID();

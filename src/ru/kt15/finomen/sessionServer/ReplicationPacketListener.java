@@ -17,9 +17,11 @@ import ru.kt15.net.labs.sessions.TcpReplicationTypes;
 public class ReplicationPacketListener implements PacketListener {
 	private final Map<InetSocketAddress, String> serverIds = new HashMap<>();
 	private final ClientStore clientStore;
+	private final SessionStore sessionStore;
 
-	public ReplicationPacketListener(ClientStore clientStore) {
+	public ReplicationPacketListener(ClientStore clientStore, SessionStore sessionStore) {
 		this.clientStore = clientStore;
+		this.sessionStore = sessionStore;
 
 	}
 
@@ -35,7 +37,7 @@ public class ReplicationPacketListener implements PacketListener {
 				List updates = List.parseFrom(Arrays.copyOfRange(packet, 1,
 						packet.length));
 				for (Session session : updates.getSessionsList()) {
-					// TODO:
+					sessionStore.update(session);
 				}
 
 				for (Host host : updates.getHostsList()) {

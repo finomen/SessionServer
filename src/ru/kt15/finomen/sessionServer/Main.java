@@ -47,11 +47,11 @@ public class Main {
 		discoverHandler.addListener(clientStore);
 		System.out.println("Done");
 		System.out.println("Initializing session storage...");
-		SessionStore sessionStore = new SessionStore();
+		SessionStore sessionStore = new SessionStore(clientStore);
 		System.out.println("Done");
 		System.out.println("Initializing replication controller...");
 		ReplicationPacketListener replicationListener = new ReplicationPacketListener(
-				clientStore);
+				clientStore, sessionStore);
 		System.out.println("OK");
 		System.out.println("Initializing administartion controller...");
 		AdminController adminController = new AdminController(clientStore, sessionStore,

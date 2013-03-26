@@ -1,15 +1,20 @@
 package ru.kt15.finomen.sessionServer;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.UUID;
 
+import ru.kt15.net.labs.sessions.ServerReplication;
+
 public class SessionStore{
 	private final HashMap<UUID, Session> sessions = new HashMap<>();
 	private final PriorityQueue<Session> expireQueue = new PriorityQueue<>();
+	private final ClientStore clientStore;
 	
-	public SessionStore() {
+	public SessionStore(ClientStore clientStore) {
+		this.clientStore = clientStore;
 	}
 	
 	private void removeGarbage() {
@@ -38,5 +43,30 @@ public class SessionStore{
 		}
 		
 		return null;
+	}
+	
+	public Collection<Session> getSessions() {
+		return sessions.values();
+	}
+
+	public void update(ServerReplication.Session session) {
+		UUID id = UUID.fromString(session.getKey().getSessionId());
+		if (session.hasRemove() && session.getRemove()) 
+		{
+			sessions.remove(id);
+			return;
+		}
+		
+		if (!sessions.containsKey(id) && !session.getKey().getServerId().equals(Options.serverUUID.toString())) {
+			Session s = new Session(id, clientStore.getClient(session.getSessionSource()),
+					clientStore.getClient(session.getSessionDest()),
+					new Date(session.getValidUntil()),
+					session.getKey().getServerId());
+			sessions.put(id, s);
+		}
+		
+		if (session.hasValidUntil()) {
+			sessions.get(id).validUntil = new Date(session.getValidUntil());
+		}
 	}
 }
