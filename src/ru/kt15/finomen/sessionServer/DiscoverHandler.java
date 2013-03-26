@@ -28,7 +28,7 @@ public class DiscoverHandler implements PacketListener {
 			byte[] pack = new byte[reply.remaining()];
 			reply.get(pack);
 			((WritablePacketConnection) conn).send(new InetSocketAddress(
-					"255.255.255.255", Options.clientUdpPort), pack);
+					"255.255.255.255", Options.clientUdpPort == -1 ? source.getPort() : Options.clientUdpPort), pack);
 		} else if (packet[0] == 0x01) {
 			ByteBuffer buf = ByteBuffer.wrap(packet);
 			buf.get();
