@@ -18,6 +18,10 @@ public class ClientStore implements DiscoverListener {
 	}
 
 	public void update(Host host) {
+		if (host.hasRemove() && host.getRemove()) {
+			clients.remove(host.getKey().getAddress());
+		}
+		
 		String address = host.getKey().getAddress();
 		Client client = null;
 		boolean add = false;
@@ -41,8 +45,6 @@ public class ClientStore implements DiscoverListener {
 				changeValid(client);
 			}
 		}
-
-		// TODO: remove
 
 		if (add) {
 			clients.put(address, client);

@@ -27,7 +27,7 @@ public class AdminController implements AdminHandler, Runnable {
 
 	private StreamConnection adminConnection;
 	private final ClientStore clientStore;
-	private final SessionStore sessionStore; //TODO:
+	private final SessionStore sessionStore;
 
 	private PacketListener udpHandler = new PacketListener() {
 		@Override
