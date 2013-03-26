@@ -46,6 +46,125 @@ public class ClientProtocolDefinition implements StreamProtocolDefinition,
 		}
 
 	}
+	
+	private static class SERVER_ID_Parser implements PacketParser {
+		byte len = -1;
+		ByteBuffer buf = ByteBuffer.allocate(1);
+
+		@Override
+		public int remaining() {
+			return buf.remaining();
+		}
+
+		@Override
+		public void put(byte[] data) {
+			buf.put(data);
+			if (len == -1 && buf.remaining() == 0) {
+				buf.flip();
+				len = buf.get();
+				buf = ByteBuffer.allocate(2 + len);
+				buf.put((byte) TcpClientPacketTypes.SERVER_ID.ordinal());
+				buf.put(len);
+			}
+		}
+
+		@Override
+		public byte[] build() {
+			buf.flip();
+			byte[] pack = new byte[buf.remaining()];
+			buf.get(pack);
+			return pack;
+		}
+
+	}
+	
+	private static class SESSION_CHECK_Parser implements PacketParser {
+		byte sidl = -1;
+		byte cnl = -1;
+		byte[] sid;
+		ByteBuffer buf = ByteBuffer.allocate(2);
+
+		@Override
+		public int remaining() {
+			return buf.remaining();
+		}
+
+		@Override
+		public void put(byte[] data) {
+			buf.put(data);
+			if (sidl == -1 && buf.remaining() == 0) {
+				buf.flip();
+				sidl = buf.get();
+				buf = ByteBuffer.allocate(sidl);
+			} else if (sid == null && buf.remaining() == 0){
+				buf.flip();
+				sid = new byte[sidl];
+				buf.get(sid);
+				buf = ByteBuffer.allocate(1);
+			} else if (cnl == -1 && buf.remaining() == 0) {
+				buf.flip();
+				cnl = buf.get();
+				buf = ByteBuffer.allocate(3 + sidl + cnl);
+				buf.put((byte) TcpClientPacketTypes.SESSION_CHECK.ordinal());
+				buf.put(sidl);
+				buf.put(sid);
+				buf.put(cnl);
+			}
+		}
+
+		@Override
+		public byte[] build() {
+			buf.flip();
+			byte[] pack = new byte[buf.remaining()];
+			buf.get(pack);
+			return pack;
+		}
+
+	}
+	
+	private static class SESSION_REQUEST_Parser implements PacketParser {
+		byte sidl = -1;
+		byte cnl = -1;
+		byte[] sid;
+		ByteBuffer buf = ByteBuffer.allocate(2);
+
+		@Override
+		public int remaining() {
+			return buf.remaining();
+		}
+
+		@Override
+		public void put(byte[] data) {
+			buf.put(data);
+			if (sidl == -1 && buf.remaining() == 0) {
+				buf.flip();
+				sidl = buf.get();
+				buf = ByteBuffer.allocate(sidl);
+			} else if (sid == null && buf.remaining() == 0){
+				buf.flip();
+				sid = new byte[sidl];
+				buf.get(sid);
+				buf = ByteBuffer.allocate(1);
+			} else if (cnl == -1 && buf.remaining() == 0) {
+				buf.flip();
+				cnl = buf.get();
+				buf = ByteBuffer.allocate(3 + sidl + cnl);
+				buf.put((byte) TcpClientPacketTypes.SESSION_REQUEST.ordinal());
+				buf.put(sidl);
+				buf.put(sid);
+				buf.put(cnl);
+			}
+		}
+
+		@Override
+		public byte[] build() {
+			buf.flip();
+			byte[] pack = new byte[buf.remaining()];
+			buf.get(pack);
+			return pack;
+		}
+
+	}
 
 	private PacketParser parser = null;
 	private boolean replication = false;
@@ -80,13 +199,13 @@ public class ClientProtocolDefinition implements StreamProtocolDefinition,
 				parser = new ADMIN_CS_Parser();
 				break;
 			case SERVER_ID:
-				// TODO:
+				parser = new SERVER_ID_Parser();
 				break;
 			case SESSION_CHECK:
-				// TODO:
+				parser = new SESSION_CHECK_Parser();
 				break;
 			case SESSION_REQUEST:
-				// TODO:
+				parser = new SESSION_REQUEST_Parser();
 				break;
 			case UNKNOWN:
 				break;
