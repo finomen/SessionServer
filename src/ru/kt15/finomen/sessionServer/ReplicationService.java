@@ -1,5 +1,6 @@
 package ru.kt15.finomen.sessionServer;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Date;
@@ -15,14 +16,17 @@ import java.util.UUID;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import ru.kt15.finomen.DataListener;
+import ru.kt15.finomen.IOService;
 import ru.kt15.finomen.PacketConnection;
 import ru.kt15.finomen.StreamConnection;
 import ru.kt15.finomen.Token;
+import ru.kt15.net.labs.sessions.ServerProtocolDefinition;
 import ru.kt15.net.labs.sessions.ServerReplication;
 import ru.kt15.net.labs.sessions.TCPServerPacketTypes;
+import ru.kt15.net.labs.sessions.TcpClientPacketTypes;
 import ru.kt15.net.labs.sessions.TcpReplicationTypes;
 
-public class ReplicationService implements Runnable, DataListener, ClientUpdateListener {
+public class ReplicationService implements Runnable, DataListener, ClientUpdateListener, DiscoverListener {
 	
 	private class DelayedCheck {
 		final Date expiration;
@@ -65,20 +69,25 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 	}
 	
 	
+	private final IOService ioService;
 	private final ClientStore clientStore;
 	private final SessionStore sessionStore;
 	private final Map<String, StreamConnection> connections = new HashMap<>();
 	private final Queue<DelayedCheck> deadlineQueue = new LinkedList<>();
 	private final Map<UUID, DelayedCheck> waitingChecks = new HashMap<>();
+	private final Map<String, String> hostToId = new HashMap<>();
 	private ServerReplication.List.Builder currentList = ServerReplication.List.newBuilder();
 	
-	public ReplicationService(ClientStore clientStore, SessionStore sessionStore) {
+	public ReplicationService(IOService ioService, ClientStore clientStore, SessionStore sessionStore) {
+		this.ioService = ioService;
 		this.clientStore = clientStore;
+		clientStore.addListener(this);
 		this.sessionStore = sessionStore;
 		new Thread(this).start();
 	}
  	
 	public void addConnection(StreamConnection connection, String id) {
+		hostToId.put(connection.getRemote().getAddress().getHostAddress(), id);
 		connections.put(id, connection);
 		connection.addRecvListener(this);
 	}	
@@ -226,7 +235,7 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 			InetSocketAddress dest, List<Token<?>> packet) {
 		try {
 			ServerReplication.List updates = ServerReplication.List.parseFrom(((byte[])packet.get(1).get()));
-			switch (TcpReplicationTypes.valueOf((Byte)packet.get(0).get())) {
+			switch (TcpReplicationTypes.valueOf(((Byte)packet.get(0).get()) & (byte)0x0F) ) {
 			case LIST_REQUEST:
 				{
 					ServerReplication.List.Builder toSend = ServerReplication.List.newBuilder();
@@ -282,6 +291,10 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 				break;
 			}
 			case UNKNOWN:
+				if ((Byte)packet.get(0).get() == TCPServerPacketTypes.SERVER_ACK.ordinal()) {
+					String serverId = (String) packet.get(1).get();
+					addConnection((StreamConnection)conn, serverId);
+				}
 				break;
 			}
 		
@@ -306,5 +319,32 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 				.setValidUntil(s.validUntil.getTime())
 				.setTimestamp(System.currentTimeMillis()).build();
 				
+	}
+
+	@Override
+	public void discoverRequestRecvd(InetSocketAddress host) {
+	}
+
+	@Override
+	public void discoverRecvd(String host, int port) {
+		if (hostToId.containsKey(host) && connections.containsKey(hostToId.get(host))) {
+			return;
+		}
+		
+		try {
+			StreamConnection conn = new StreamConnection(new ServerProtocolDefinition(), new InetSocketAddress(host, port), ioService);
+			conn.addRecvListener(this);
+			String stringId = Options.serverUUID.toString();
+			ByteBuffer buf = ByteBuffer.allocate(2 + stringId.length());
+			buf.put((byte) TcpClientPacketTypes.SERVER_ID.ordinal());
+			buf.put((byte) stringId.length());
+			buf.put(stringId.getBytes());
+			buf.flip();
+			byte[] bin = new byte[buf.remaining()];
+			buf.get(bin);
+			conn.Send(bin);
+		} catch (IOException e) {
+		}
+		
 	}
 }

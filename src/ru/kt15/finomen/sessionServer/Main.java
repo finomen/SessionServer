@@ -50,7 +50,7 @@ public class Main {
 		SessionStore sessionStore = new SessionStore(clientStore);
 		System.out.println("Done");
 		System.out.println("Initializing replication controller...");
-		ReplicationService replicationService = new ReplicationService(
+		ReplicationService replicationService = new ReplicationService(ioService,
 				clientStore, sessionStore);
 		System.out.println("OK");
 		System.out.println("Initializing administartion controller...");

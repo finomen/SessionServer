@@ -13,6 +13,10 @@ public class ClientStore implements DiscoverListener {
 	private final Set<ClientUpdateListener> listeners = new HashSet<>();
 	private final Map<String, Client> clients = new HashMap<>();
 
+	public void addListener(ClientUpdateListener listener) {
+		listeners.add(listener);
+	}
+	
 	public Collection<Client> getClients() {
 		return clients.values();
 	}
