@@ -9,4 +9,6 @@ public class Options {
 	static UUID serverUUID = UUID
 			.fromString("188f502e-e4f6-4030-8797-112dc7a0d11e");
 	static long sessionTTL = 10 * 1000;
+	static long delayedCheckTTL = 5 * 1000;
+	static long replicationRoutineLoop = 50;
 }

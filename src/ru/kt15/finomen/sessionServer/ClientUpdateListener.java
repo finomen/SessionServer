@@ -1,9 +1,9 @@
 package ru.kt15.finomen.sessionServer;
 
 public interface ClientUpdateListener {
-	void addClient(String address, String cname, boolean valid);
+	void addClient(Client client);
 
-	void changeName(String address, String name);
+	void changeName(Client client);
 
-	void changeValid(String address, boolean valid);
+	void changeValid(Client client);
 }

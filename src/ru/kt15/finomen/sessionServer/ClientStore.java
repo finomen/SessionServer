@@ -54,19 +54,19 @@ public class ClientStore implements DiscoverListener {
 
 	private void addClient(Client client) {
 		for (ClientUpdateListener listener : listeners) {
-			listener.addClient(client.host, client.computerName, client.valid);
+			listener.addClient(client);
 		}
 	}
 
 	private void changeName(Client client) {
 		for (ClientUpdateListener listener : listeners) {
-			listener.changeName(client.host, client.computerName);
+			listener.changeName(client);
 		}
 	}
 
 	private void changeValid(Client client) {
 		for (ClientUpdateListener listener : listeners) {
-			listener.changeValid(client.host, client.valid);
+			listener.changeValid(client);
 		}
 	}
 

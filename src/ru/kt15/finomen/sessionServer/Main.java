@@ -50,7 +50,7 @@ public class Main {
 		SessionStore sessionStore = new SessionStore(clientStore);
 		System.out.println("Done");
 		System.out.println("Initializing replication controller...");
-		ReplicationPacketListener replicationListener = new ReplicationPacketListener(
+		ReplicationService replicationService = new ReplicationService(
 				clientStore, sessionStore);
 		System.out.println("OK");
 		System.out.println("Initializing administartion controller...");
@@ -62,7 +62,7 @@ public class Main {
 		System.out.println("OK");
 		System.out.println("Initializing client connection controller...");
 		ClientPacketListener clientListener = new ClientPacketListener(
-				replicationListener, adminController, sessionStore, clientStore);
+				replicationService, adminController, sessionStore, clientStore);
 		System.out.println("OK");
 		System.out.println("Start listening...");
 		ServerConnection serverConnection = new ServerConnection(

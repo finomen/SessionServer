@@ -2,9 +2,7 @@ package ru.kt15.finomen.sessionServer;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import ru.kt15.finomen.DataListener;
@@ -19,15 +17,14 @@ import ru.kt15.net.labs.sessions.TcpClientPacketTypes;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 public class ClientPacketListener implements DataListener {
-	private final ReplicationPacketListener replicationListener;
-	private final Set<StreamConnection> replicationConnections = new HashSet<>();
+	private final ReplicationService replicationService;
 	private final AdminHandler adminListener;
 	private final SessionStore sessionStore;
 	private final ClientStore clientStore;
 
-	public ClientPacketListener(ReplicationPacketListener replicationListener,
+	public ClientPacketListener(ReplicationService replicationService,
 			AdminHandler adminListener, SessionStore sessionStore, ClientStore clientStore) {
-		this.replicationListener = replicationListener;
+		this.replicationService = replicationService;
 		this.adminListener = adminListener;
 		this.sessionStore = sessionStore;
 		this.clientStore = clientStore;
@@ -39,7 +36,7 @@ public class ClientPacketListener implements DataListener {
 		switch (TcpClientPacketTypes.valueOf((Byte)packet.get(0).get())) {
 		case SERVER_ID: {
 			String id = (String) packet.get(1).get();
-			replicationListener.registerServer(source, id);
+			replicationService.addConnection((StreamConnection)conn, id);
 			String myId = Options.serverUUID.toString();
 			ByteBuffer buf = ByteBuffer.allocate(myId.length() + 2);
 			buf.put((byte) TCPServerPacketTypes.SERVER_ACK.ordinal());
@@ -50,8 +47,6 @@ public class ClientPacketListener implements DataListener {
 			buf.get(pack);
 			((StreamConnection) conn).Send(pack);
 			conn.removeRecvListener(this);
-			conn.addRecvListener(replicationListener);
-			replicationConnections.add(((StreamConnection) conn));
 			break;
 		}
 		case SESSION_CHECK: {
@@ -64,25 +59,33 @@ public class ClientPacketListener implements DataListener {
 				sessionId = id;
 				System.out.println("Bad id: `" + sessionId + "`");
 			}
-			//String serverId = id.substring(sessionId.length());
-			//TODO: cross-server request
+			
+			String serverId = id.substring(sessionId.length());
+			
+			
 			Client destination = clientStore.getClient(source.getAddress().getHostAddress());
 			
 			boolean valid = false;
+			UUID sessionUUID = null;
 			try {
-				valid = sessionStore.validateSession(UUID.fromString(sessionId), destination);
+				valid = sessionStore.validateSession(sessionUUID = UUID.fromString(sessionId), destination);
 			} catch(IllegalArgumentException e) {
 				
 			}
 			valid = valid && host.equals(destination.computerName);
-			ByteBuffer buf = ByteBuffer.allocate(2 + id.length());
-			buf.put((byte)(valid ? TCPServerPacketTypes.SESSION_VALID : TCPServerPacketTypes.SESSION_FAIL).ordinal());
-			buf.put((byte) id.length());
-			buf.put(id.getBytes());
-			buf.flip();
-			byte[] pack = new byte[buf.remaining()];
-			buf.get(pack);
-			((StreamConnection) conn).Send(pack);
+			
+			if (!valid && sessionUUID != null && serverId.equals(Options.serverUUID.toString())) {
+				replicationService.validateSession((StreamConnection)conn, sessionUUID, serverId, destination);
+			} else {
+				ByteBuffer buf = ByteBuffer.allocate(2 + id.length());
+				buf.put((byte)(valid ? TCPServerPacketTypes.SESSION_VALID : TCPServerPacketTypes.SESSION_FAIL).ordinal());
+				buf.put((byte) id.length());
+				buf.put(id.getBytes());
+				buf.flip();
+				byte[] pack = new byte[buf.remaining()];
+				buf.get(pack);
+				((StreamConnection) conn).Send(pack);
+			}
 			break;
 		}
 		case SESSION_REQUEST: {
@@ -111,10 +114,7 @@ public class ClientPacketListener implements DataListener {
 				buf.put((byte)sid.length());
 				buf.put(sid.getBytes());
 				
-				for (StreamConnection c : replicationConnections) {
-					replicationListener.update(c);
-				}
-				
+				replicationService.addSession(s);				
 			}
 			
 			buf.put((byte)remoteHost.length());
