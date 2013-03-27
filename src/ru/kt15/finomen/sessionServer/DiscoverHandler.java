@@ -8,6 +8,7 @@ import java.util.Set;
 import ru.kt15.finomen.PacketConnection;
 import ru.kt15.finomen.PacketListener;
 import ru.kt15.finomen.WritablePacketConnection;
+import ru.kt15.net.labs.sessions.UdpPacketTypes;
 
 public class DiscoverHandler implements PacketListener {
 	private final Set<DiscoverListener> listeners = new HashSet<>();
@@ -15,7 +16,7 @@ public class DiscoverHandler implements PacketListener {
 	@Override
 	public void handlePacket(PacketConnection conn, InetSocketAddress source,
 			InetSocketAddress dest, byte[] packet) {
-		if (packet.length == 1 && packet[0] == 0x00) {
+		if (packet.length == 1 && packet[0] == UdpPacketTypes.DISCOVER_REQ.ordinal()) {
 			discoverRequest(source);
 
 			String host = dest.getAddress().getHostAddress();
@@ -29,13 +30,13 @@ public class DiscoverHandler implements PacketListener {
 			reply.get(pack);
 			((WritablePacketConnection) conn).send(new InetSocketAddress(
 					"255.255.255.255", Options.clientUdpPort == -1 ? source.getPort() : Options.clientUdpPort), pack);
-		} else if (packet[0] == 0x01) {
+		} else if (packet[0] == UdpPacketTypes.DISCOVER_SRV.ordinal()) {
 			ByteBuffer buf = ByteBuffer.wrap(packet);
 			buf.get();
 			int len = buf.get();
 			byte[] hostBytes = new byte[len];
 			buf.get(hostBytes);
-			int port = buf.getInt();
+			short port = buf.getShort();
 			discover(new String(hostBytes), port);
 		}
 	}

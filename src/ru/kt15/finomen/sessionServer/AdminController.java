@@ -147,6 +147,7 @@ public class AdminController implements AdminHandler, Runnable {
 
 				if (adminConnection != null) {
 					if (!adminConnection.Send(pack)) {
+						System.out.println("Admin disconnected");
 						adminConnection = null;
 					}
 				}
@@ -161,6 +162,7 @@ public class AdminController implements AdminHandler, Runnable {
 
 	@Override
 	public void setAdminConnection(StreamConnection conn) {
+		System.out.println("Admin connected: " + conn.toString());
 		adminConnection = conn;
 	}
 

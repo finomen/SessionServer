@@ -109,7 +109,7 @@ public class ClientPacketListener implements DataListener {
 		case ADMIN_CS:
 			try {
 				adminListener.setAdminConnection((StreamConnection) conn);
-				CS cs = CS.parseFrom(((String)packet.get(1).get()).getBytes());
+				CS cs = CS.parseFrom(((byte[])packet.get(1).get()));
 
 				if (cs.hasLogTcp())
 					adminListener.setTcpLogging(cs.getLogTcp());

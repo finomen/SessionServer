@@ -51,7 +51,7 @@ public class ReplicationPacketListener implements DataListener {
 			InetSocketAddress dest, List<Token<?>> packet) {
 
 		try {
-			ServerReplication.List updates = ServerReplication.List.parseFrom(((String)packet.get(1).get()).getBytes());
+			ServerReplication.List updates = ServerReplication.List.parseFrom(((byte[])packet.get(1).get()));
 			switch (TcpReplicationTypes.valueOf((Byte)packet.get(0).get())) {
 			case LIST_REQUEST:
 				{
