@@ -27,7 +27,7 @@ public class Session implements Comparable<Session> {
 	}
 
 	boolean isValid(Client realDest) {
-		return validUntil.before(new Date()) && source.valid && dest.valid
+		return validUntil.after(new Date()) && source.valid && dest.valid
 				&& realDest.host.equals(dest.host)
 				&& dest.computerName.equals(realDest.computerName);
 	}

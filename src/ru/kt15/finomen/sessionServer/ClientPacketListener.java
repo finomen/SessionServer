@@ -2,7 +2,9 @@ package ru.kt15.finomen.sessionServer;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import ru.kt15.finomen.DataListener;
@@ -18,6 +20,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 public class ClientPacketListener implements DataListener {
 	private final ReplicationPacketListener replicationListener;
+	private final Set<StreamConnection> replicationConnections = new HashSet<>();
 	private final AdminHandler adminListener;
 	private final SessionStore sessionStore;
 	private final ClientStore clientStore;
@@ -46,18 +49,31 @@ public class ClientPacketListener implements DataListener {
 			byte[] pack = new byte[buf.remaining()];
 			buf.get(pack);
 			((StreamConnection) conn).Send(pack);
-			conn.removeAllListeners();
+			conn.removeRecvListener(this);
 			conn.addRecvListener(replicationListener);
+			replicationConnections.add(((StreamConnection) conn));
 			break;
 		}
 		case SESSION_CHECK: {
 			String id = (String) packet.get(1).get();
 			String host = (String) packet.get(2).get();
-			String sessionId = id.substring(0, Options.serverUUID.toString().length());
+			String sessionId = "";
+			if (id.length() > Options.serverUUID.toString().length()) {
+				sessionId = id.substring(0, Options.serverUUID.toString().length());
+			} else {
+				sessionId = id;
+				System.out.println("Bad id: `" + sessionId + "`");
+			}
 			//String serverId = id.substring(sessionId.length());
 			//TODO: cross-server request
 			Client destination = clientStore.getClient(source.getAddress().getHostAddress());
-			boolean valid = sessionStore.validateSession(UUID.fromString(sessionId), destination);
+			
+			boolean valid = false;
+			try {
+				valid = sessionStore.validateSession(UUID.fromString(sessionId), destination);
+			} catch(IllegalArgumentException e) {
+				
+			}
 			valid = valid && host.equals(destination.computerName);
 			ByteBuffer buf = ByteBuffer.allocate(2 + id.length());
 			buf.put((byte)(valid ? TCPServerPacketTypes.SESSION_VALID : TCPServerPacketTypes.SESSION_FAIL).ordinal());
@@ -73,11 +89,11 @@ public class ClientPacketListener implements DataListener {
 			String hostName = (String) packet.get(1).get();
 			String remoteHost = (String) packet.get(2).get();
 			Client from = clientStore.getClient(source.getAddress().getHostAddress());
-			Client to = clientStore.getClient(source.getAddress().getHostAddress());
+			Client to = clientStore.getClient(remoteHost);
 
 			if (from.computerName.isEmpty()) {
 				from.computerName = hostName;
-				from.valid = false;
+				from.valid = true;
 			}
 			
 			boolean valid = from.valid && from.computerName.equals(hostName);
@@ -94,6 +110,11 @@ public class ClientPacketListener implements DataListener {
 			if (valid) {
 				buf.put((byte)sid.length());
 				buf.put(sid.getBytes());
+				
+				for (StreamConnection c : replicationConnections) {
+					replicationListener.update(c);
+				}
+				
 			}
 			
 			buf.put((byte)remoteHost.length());

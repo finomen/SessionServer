@@ -2,6 +2,8 @@ package ru.kt15.finomen.sessionServer;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 
 import ru.kt15.finomen.IOService;
 import ru.kt15.finomen.PacketConnection;
@@ -123,7 +125,10 @@ public class AdminController implements AdminHandler, Runnable {
 					currentPacketLog.addHosts(host);
 				}
 				
-				for (Session session : sessionStore.getSessions()) {
+				Set<Session> sessions = new HashSet<>();
+				sessions.addAll(sessionStore.getSessions());
+				
+				for (Session session : sessions) {
 					ServerControl.Session s = ServerControl.Session.newBuilder()
 							.setSessionId(session.id.toString())
 							.setServerId(session.serverId)

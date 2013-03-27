@@ -110,6 +110,31 @@ public class ReplicationPacketListener implements DataListener {
 			e.printStackTrace();
 		}
 	}
+	
+	void update(StreamConnection repConnection) {
+		ServerReplication.List.Builder toSend = ServerReplication.List.newBuilder();
+
+		for (Client c : clientStore.getClients()) {
+			ServerReplication.Host h = convert(c);
+			toSend.addHosts(h);
+		}
+		
+		for (Session s : sessionStore.getSessions()) {
+			ServerReplication.Session sess = convert(s);
+			toSend.addSessions(sess);
+		}
+		
+		ServerReplication.List pack = toSend.build();
+		
+		ByteBuffer b = ByteBuffer.allocate(3 + pack.getSerializedSize());
+		b.put((byte)(TcpReplicationTypes.LIST_UPDATES.ordinal() | 0xF0));
+		b.putShort((short)pack.getSerializedSize());
+		b.put(pack.toByteArray());
+		b.flip();
+		byte[] raw = new byte[b.remaining()]; 
+		b.get(raw);
+		repConnection.Send(raw);
+	}
 
 	public void registerServer(InetSocketAddress addr, String id) {
 		serverIds.put(addr, id);

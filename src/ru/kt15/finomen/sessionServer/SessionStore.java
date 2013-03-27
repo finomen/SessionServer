@@ -18,7 +18,7 @@ public class SessionStore{
 	}
 	
 	private void removeGarbage() {
-		while (!expireQueue.isEmpty() && expireQueue.peek().validUntil.after(new Date())) {
+		while (!expireQueue.isEmpty() && expireQueue.peek().validUntil.before(new Date())) {
 			Session s = expireQueue.poll();
 			sessions.remove(s.id);
 		}

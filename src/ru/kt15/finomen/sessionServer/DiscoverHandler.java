@@ -16,6 +16,8 @@ public class DiscoverHandler implements PacketListener {
 	@Override
 	public void handlePacket(PacketConnection conn, InetSocketAddress source,
 			InetSocketAddress dest, byte[] packet) {
+		if (packet.length == 0)
+			return;
 		if (packet.length == 1 && packet[0] == UdpPacketTypes.DISCOVER_REQ.ordinal()) {
 			discoverRequest(source);
 
