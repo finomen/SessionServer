@@ -69,4 +69,15 @@ public class SessionStore{
 			sessions.get(id).validUntil = new Date(session.getValidUntil());
 		}
 	}
+	
+	public Session getSession(UUID sessionId, String serverId) {
+		Session s = sessions.get(sessionId);
+		if (s != null) {
+			if (!s.serverId.equals(serverId)) {
+				s = null;
+			}
+		}
+		
+		return s;
+	}
 }

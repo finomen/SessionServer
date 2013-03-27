@@ -23,7 +23,7 @@ public class DiscoverHandler implements PacketListener {
 			reply.put((byte) 0x01);
 			reply.put((byte) host.length());
 			reply.put(host.getBytes());
-			reply.putShort(Options.udpPort);
+			reply.putShort(Options.tcpPort);
 			reply.flip();
 			byte[] pack = new byte[reply.remaining()];
 			reply.get(pack);
