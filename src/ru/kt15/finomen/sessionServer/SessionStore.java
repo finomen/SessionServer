@@ -57,7 +57,7 @@ public class SessionStore{
 			return;
 		}
 		
-		if (!sessions.containsKey(id) && !session.getKey().getServerId().equals(Options.serverUUID.toString())) {
+		if (!sessions.containsKey(id)) {
 			Session s = new Session(id, clientStore.getClient(session.getSessionSource()),
 					clientStore.getClient(session.getSessionDest()),
 					new Date(session.getValidUntil()),

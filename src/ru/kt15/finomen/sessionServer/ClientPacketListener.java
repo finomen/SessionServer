@@ -95,8 +95,8 @@ public class ClientPacketListener implements DataListener {
 			Client to = clientStore.getClient(remoteHost);
 
 			if (from.computerName.isEmpty()) {
-				from.computerName = hostName;
-				from.valid = true;
+				clientStore.setName(from, hostName);
+				clientStore.setValid(from, true);
 			}
 			
 			boolean valid = from.valid && from.computerName.equals(hostName);
@@ -141,7 +141,7 @@ public class ClientPacketListener implements DataListener {
 				for (ValidateRequest req : cs.getUserValidateList()) {
 					Client c = clientStore.getClient(req.getHost());
 					if (c.computerName.equals(req.getName())) {
-						c.valid = req.getValid();
+						clientStore.setValid(c, req.getValid());
 					}
 				}
 			} catch (InvalidProtocolBufferException e) {

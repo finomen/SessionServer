@@ -87,6 +87,7 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 	}
  	
 	public void addConnection(StreamConnection connection, String id) {
+		System.out.println("Connected server " + id);
 		hostToId.put(connection.getRemote().getAddress().getHostAddress(), id);
 		connections.put(id, connection);
 		connection.addRecvListener(this);
@@ -184,6 +185,7 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 	}
 	
 	private void send(TcpReplicationTypes type, ServerReplication.List packet) {
+		System.out.println("Send updates");
 		ByteBuffer buf = ByteBuffer.allocate(3 + packet.getSerializedSize());
 		buf.put((byte)(0xF0 | type.ordinal()));
 		buf.putShort((short)packet.getSerializedSize());
@@ -193,6 +195,7 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 		buf.get(bin);
 		Set<String> badHosts = new HashSet<>();
 		for (String id : connections.keySet()) {
+			System.out.println("Send update to " + id);
 			if (!connections.get(id).Send(bin)) {
 				badHosts.add(id);
 			}
@@ -204,29 +207,41 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 	}
 
 	@Override
-	public void run() {	
-		ServerReplication.List list;
-		synchronized (this) {
-			list = currentList.build();
-			currentList = ServerReplication.List.newBuilder();
-		}
-		
-		if (list.getSessionsCount() > 0 || list.getHostsCount() > 0) {
-			send(TcpReplicationTypes.LIST_UPDATES, list);
-		}
-		
-		synchronized (this) {
-			while (!deadlineQueue.isEmpty() && deadlineQueue.peek().expiration.before(new Date())) {
-				DelayedCheck check = deadlineQueue.poll();
-				waitingChecks.remove(check.sessionId);
-				check.timeout();
+	public void run() {
+		while (true) {
+			ServerReplication.List list;
+			synchronized (this) {
+				list = currentList.build();
+				currentList = ServerReplication.List.newBuilder();
 			}
-		}
-		
-		try {
-			Thread.sleep(Options.replicationRoutineLoop);
-		} catch (InterruptedException e) {
-			return;
+			
+			for (Session s : sessionStore.getSessions()) {
+				currentList.addSessions(ServerReplication.Session.newBuilder()
+						.setKey(ServerReplication.SessionKey.newBuilder()
+								.setServerId(s.serverId)
+								.setSessionId(s.id.toString()).build()
+								)
+								.setValidUntil(s.validUntil.getTime()));
+			}
+			
+			if (list.getSessionsCount() > 0 || list.getHostsCount() > 0) {
+				send(TcpReplicationTypes.LIST_UPDATES, list);
+			}
+			
+			
+			synchronized (this) {
+				while (!deadlineQueue.isEmpty() && deadlineQueue.peek().expiration.before(new Date())) {
+					DelayedCheck check = deadlineQueue.poll();
+					waitingChecks.remove(check.sessionId);
+					check.timeout();
+				}
+			}
+			
+			try {
+				Thread.sleep(Options.replicationRoutineLoop);
+			} catch (InterruptedException e) {
+				return;
+			}
 		}
 	}
 
@@ -238,6 +253,7 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 			switch (TcpReplicationTypes.valueOf(((Byte)packet.get(0).get()) & (byte)0x0F) ) {
 			case LIST_REQUEST:
 				{
+					System.out.println("List request");
 					ServerReplication.List.Builder toSend = ServerReplication.List.newBuilder();
 					if (updates.getHostsCount() == 0 && updates.getSessionsCount() == 0) { 
 						for (Client c : clientStore.getClients()) {
