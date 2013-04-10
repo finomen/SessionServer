@@ -46,6 +46,7 @@ public class SessionStore{
 	}
 	
 	public Collection<Session> getSessions() {
+		removeGarbage();
 		return sessions.values();
 	}
 
