@@ -257,8 +257,10 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 					ServerReplication.List.Builder toSend = ServerReplication.List.newBuilder();
 					if (updates.getHostsCount() == 0 && updates.getSessionsCount() == 0) { 
 						for (Client c : clientStore.getClients()) {
-							ServerReplication.Host h = convert(c);
-							toSend.addHosts(h);
+							if (!c.computerName.isEmpty()) {
+								ServerReplication.Host h = convert(c);
+								toSend.addHosts(h);
+							}
 						}
 						
 						for (Session s : sessionStore.getSessions()) {
@@ -275,7 +277,10 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 						
 						for (ServerReplication.Host h : updates.getHostsList()) {
 							Client c = clientStore.getClient(h.getKey().getAddress());
-							toSend.addHosts(convert(c));
+							
+							if (!c.computerName.isEmpty()) {
+								toSend.addHosts(convert(c));
+							}
 						}
 					}
 					

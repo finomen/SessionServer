@@ -147,6 +147,7 @@ public class ClientPacketListener implements DataListener {
 				for (String req : cs.getNameResetList()) {
 					Client c = clientStore.getClient(req);
 					c.computerName = "";
+					replicationService.changeName(c);
 				}
 			} catch (InvalidProtocolBufferException e) {
 				e.printStackTrace();
