@@ -144,6 +144,10 @@ public class ClientPacketListener implements DataListener {
 						clientStore.setValid(c, req.getValid());
 					}
 				}
+				for (String req : cs.getNameResetList()) {
+					Client c = clientStore.getClient(req);
+					c.computerName = "";
+				}
 			} catch (InvalidProtocolBufferException e) {
 				e.printStackTrace();
 			}
