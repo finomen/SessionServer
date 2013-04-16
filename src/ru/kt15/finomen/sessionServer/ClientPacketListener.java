@@ -74,7 +74,7 @@ public class ClientPacketListener implements DataListener {
 			}
 			valid = valid && host.equals(destination.computerName);
 			
-			if (!valid && sessionUUID != null && serverId.equals(Options.serverUUID.toString())) {
+			if (!valid && sessionUUID != null && !serverId.equals(Options.serverUUID.toString())) {
 				replicationService.validateSession((StreamConnection)conn, sessionUUID, serverId, destination);
 			} else {
 				ByteBuffer buf = ByteBuffer.allocate(2 + id.length());

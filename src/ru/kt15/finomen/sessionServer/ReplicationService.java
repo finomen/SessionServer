@@ -178,7 +178,7 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 								.setServerId(serverId)
 								.setSessionId(sessionId.toString())
 								.build()
-						)
+						).setTimestamp(new Date().getTime())
 						.build()
 				).build();
 		send(TcpReplicationTypes.LIST_REQUEST, list);
@@ -221,7 +221,7 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 								.setServerId(s.serverId)
 								.setSessionId(s.id.toString()).build()
 								)
-								.setValidUntil(s.validUntil.getTime()));
+								.setValidUntil(s.validUntil.getTime()).setTimestamp(new Date().getTime()));
 			}
 			
 			if (list.getSessionsCount() > 0 || list.getHostsCount() > 0) {
@@ -248,6 +248,9 @@ public class ReplicationService implements Runnable, DataListener, ClientUpdateL
 	@Override
 	public void handlePacket(PacketConnection conn, InetSocketAddress source,
 			InetSocketAddress dest, List<Token<?>> packet) {
+			if (packet.size() < 2) {
+				System.err.println("Bad packet " + packet.get(0)  + " with " + packet.size() + " fields");
+			}
 		try {
 			ServerReplication.List updates = ServerReplication.List.parseFrom(((byte[])packet.get(1).get()));
 			switch (TcpReplicationTypes.valueOf(((Byte)packet.get(0).get()) & (byte)0x0F) ) {
